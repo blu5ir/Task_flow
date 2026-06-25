@@ -1,7 +1,3 @@
-from flask import Flask, render_template_string, request, jsonify, g
-import sqlite3
-import os
-from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your-secret-key-here'  # Change in production
