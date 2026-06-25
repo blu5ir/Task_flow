@@ -48,7 +48,7 @@ executing==2.2.0
 fasteners==0.20
 fastjsonschema==2.21.2
 filelock==3.19.1
-flask==2.3.3
+Flask==2.3.3
 flask-cors==6.0.1
 Flask-Login==0.6.3
 Flask-SocketIO==5.3.6
