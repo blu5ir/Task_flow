@@ -1,4 +1,9 @@
+from flask import Flask, request, jsonify, render_template_string
+import sqlite3
+import os
+import subprocess
 
+app = Flask(__name__)
 
 def get_db():
     db = getattr(g, '_database', None)
