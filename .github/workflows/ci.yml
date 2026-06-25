@@ -1,21 +1,25 @@
-name: CI/CD Pipeline Presentation
+name: Presentation Pipeline
 
 on: [push]
 
 jobs:
-  build-and-test:
+  test:
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v3
+      - uses: actions/checkout@v3
+      - name: Run Tests
+        run: echo "Simulating unit tests... PASSED"
 
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.10'
+  build:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Artifact
+        run: echo "Building application container..."
 
-      - name: Install dependencies
-        run: pip install -r requirements.txt
-
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
       - name: Run Deployment Script
         run: bash deploy.sh
