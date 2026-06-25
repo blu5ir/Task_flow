@@ -25,6 +25,20 @@ def init_db():
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
+        cursor.execute('''
+            CREATE TABLE IF NOT EXISTS tasks (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title TEXT NOT NULL,
+                priority TEXT CHECK(priority IN ('high', 'medium', 'low')) NOT NULL,
+                completed BOOLEAN DEFAULT 0,
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            )
+        ''')
+        db.commit()
+        
+    with app.app_context():
+        db = get_db()
+        cursor = db.cursor()
         # Drop and recreate to ensure correct schema (safe for demo)
         cursor.execute('DROP TABLE IF EXISTS tasks')
         cursor.execute('''
