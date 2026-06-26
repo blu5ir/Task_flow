@@ -1,10 +1,12 @@
-from flask import Flask, request, jsonify, render_template_string
+from flask import Flask, request, jsonify, render_template_string, g
 import sqlite3
 import os
 import subprocess
 
 
 app = Flask(__name__)
+
+DATABASE = "tasks.db"
 
 def get_db():
     db = getattr(g, '_database', None)
@@ -23,6 +25,7 @@ def init_db():
     with app.app_context():
         db = get_db()
         cursor = db.cursor()
+
         cursor.execute('''
             CREATE TABLE IF NOT EXISTS tasks (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -32,21 +35,7 @@ def init_db():
                 created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
             )
         ''')
-        db.commit()        
-    with app.app_context():
-        db = get_db()
-        cursor = db.cursor()
-        # Drop and recreate to ensure correct schema (safe for demo)
-        cursor.execute('DROP TABLE IF EXISTS tasks')
-        cursor.execute('''
-            CREATE TABLE tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                priority TEXT CHECK(priority IN ('high', 'medium', 'low')) NOT NULL,
-                completed BOOLEAN DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
+
         db.commit()
 
 # Initialize database on startup
