@@ -1,16 +1,20 @@
+import os
 import requests
+from datetime import datetime
 from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
-# In-memory task storage (no database)
+# In‑memory storage
 tasks = []
 next_id = 1
 
+# Webhook URL – set via environment variable or use placeholder
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "YOUR_TASKFLOW_WEBHOOK_URL")
+
 def trigger_webhook(payload):
-    webhook_url = "YOUR_TASKFLOW_WEBHOOK_URL"
     try:
-        requests.post(webhook_url, json=payload, timeout=3)
+        requests.post(WEBHOOK_URL, json=payload, timeout=3)
     except Exception as e:
         print(f"Webhook error: {e}")
 
@@ -707,7 +711,6 @@ def add_task():
         return jsonify({'success': False, 'error': 'Title is required'})
     if priority not in ['high', 'medium', 'low']:
         priority = 'medium'
-    from datetime import datetime
     now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
     task = {
         'id': next_id,
@@ -751,4 +754,5 @@ def complete_simulation():
     return jsonify({"status": "Webhook sent"})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5001)
+    port = int(os.environ.get('PORT', 5001))
+    app.run(debug=False, host='0.0.0.0', port=port)
