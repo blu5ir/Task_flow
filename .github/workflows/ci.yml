@@ -7,18 +7,23 @@ on:
 
 jobs:
   test:
-    runs-on: ubuntu-latest
+  runs-on: ubuntu-latest
 
-    steps:
-      - uses: actions/checkout@v4
+  steps:
+    - uses: actions/checkout@v4
 
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
 
-      - run: pip install -r requirements.txt
+    - name: Install dependencies
+      run: pip install -r requirements.txt
 
-      - run: echo "Tests Passed"
+    - name: Check Python syntax
+      run: python -m py_compile taskflow.py
+
+    - name: Import application
+      run: python -c "import taskflow"
 
   build:
     needs: test
