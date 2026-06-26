@@ -1,45 +1,18 @@
-from flask import Flask, request, jsonify, render_template_string, g
-import sqlite3
-import os
-import subprocess
-
+import requests
+from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
-DATABASE = "tasks.db"
+# In-memory task storage (no database)
+tasks = []
+next_id = 1
 
-def get_db():
-    db = getattr(g, '_database', None)
-    if db is None:
-        db = g._database = sqlite3.connect(DATABASE)
-        db.row_factory = sqlite3.Row
-    return db
-
-@app.teardown_appcontext
-def close_connection(exception):
-    db = getattr(g, '_database', None)
-    if db is not None:
-        db.close()
-
-def init_db():
-    with app.app_context():
-        db = get_db()
-        cursor = db.cursor()
-
-        cursor.execute('''
-            CREATE TABLE IF NOT EXISTS tasks (
-                id INTEGER PRIMARY KEY AUTOINCREMENT,
-                title TEXT NOT NULL,
-                priority TEXT CHECK(priority IN ('high', 'medium', 'low')) NOT NULL,
-                completed BOOLEAN DEFAULT 0,
-                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-            )
-        ''')
-
-        db.commit()
-
-# Initialize database on startup
-init_db()
+def trigger_webhook(payload):
+    webhook_url = "YOUR_TASKFLOW_WEBHOOK_URL"
+    try:
+        requests.post(webhook_url, json=payload, timeout=3)
+    except Exception as e:
+        print(f"Webhook error: {e}")
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
@@ -150,25 +123,21 @@ HTML_TEMPLATE = '''
         .toast.error { border-left: 4px solid #EF4444; }
         .toast.info { border-left: 4px solid #6366F1; }
 
-        /* Scrollbar */
         ::-webkit-scrollbar { width: 8px; }
         ::-webkit-scrollbar-track { background: #1E293B; }
         ::-webkit-scrollbar-thumb { background: #6366F1; border-radius: 10px; }
 
-        /* Dark mode toggle icon */
         .dark-mode-toggle {
             cursor: pointer;
             transition: transform 0.3s;
         }
         .dark-mode-toggle:hover { transform: rotate(30deg); }
 
-        /* Mobile responsive */
         @media (max-width: 640px) {
             .hero-heading { font-size: 2.5rem; line-height: 1.2; }
             .stats-grid { grid-template-columns: 1fr 1fr; }
         }
 
-        /* Button styles */
         .btn-primary {
             background: #6366F1;
             color: white;
@@ -206,7 +175,6 @@ HTML_TEMPLATE = '''
         .btn-icon.delete:hover { background: rgba(239, 68, 68, 0.3); border-color: #EF4444; }
         .btn-icon.complete:hover { background: rgba(34, 197, 94, 0.3); border-color: #22C55E; }
 
-        /* Select styling */
         select, input[type="text"] {
             background: rgba(255,255,255,0.05);
             border: 1px solid rgba(255,255,255,0.1);
@@ -223,7 +191,6 @@ HTML_TEMPLATE = '''
         }
         select option { background: #1E293B; }
 
-        /* Light mode overrides */
         html:not(.dark) body {
             background: #F8FAFC;
             color: #0F172A;
@@ -281,10 +248,8 @@ HTML_TEMPLATE = '''
 </head>
 <body>
 
-    <!-- Toast Container -->
     <div id="toast" class="toast"></div>
 
-    <!-- Navbar -->
     <nav class="fixed top-0 left-0 w-full z-50 glass py-3 px-6 md:px-12 flex items-center justify-between backdrop-blur-xl">
         <div class="flex items-center space-x-2">
             <span class="text-2xl font-space font-bold bg-gradient-to-r from-indigo-400 to-emerald-400 bg-clip-text text-transparent">TaskFlow</span>
@@ -303,7 +268,6 @@ HTML_TEMPLATE = '''
         </div>
     </nav>
 
-    <!-- Hero Section -->
     <section class="hero-gradient pt-28 pb-16 px-4 md:px-12 text-center relative overflow-hidden">
         <div class="max-w-4xl mx-auto relative z-10">
             <h1 class="hero-heading text-5xl md:text-7xl font-space font-bold leading-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
@@ -313,16 +277,13 @@ HTML_TEMPLATE = '''
                 Organize, prioritize, and complete your most important work.
             </p>
         </div>
-        <!-- Animated blobs -->
         <div class="absolute top-0 left-0 w-full h-full overflow-hidden pointer-events-none">
             <div class="absolute -top-20 -left-20 w-64 h-64 bg-indigo-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse"></div>
             <div class="absolute -bottom-20 -right-20 w-64 h-64 bg-emerald-500 rounded-full mix-blend-multiply filter blur-3xl opacity-20 animate-pulse delay-1000"></div>
         </div>
     </section>
 
-    <!-- Main Content -->
     <main class="max-w-5xl mx-auto px-4 md:px-8 py-8 -mt-8 relative z-20">
-        <!-- Task Input -->
         <div class="glass rounded-3xl p-6 md:p-8 mb-10 slide-up">
             <form id="taskForm" class="flex flex-col md:flex-row gap-4 items-end">
                 <div class="flex-1 w-full">
@@ -346,7 +307,6 @@ HTML_TEMPLATE = '''
             </form>
         </div>
 
-        <!-- Stats -->
         <div class="stats-grid grid grid-cols-2 md:grid-cols-4 gap-4 mb-10">
             <div class="glass rounded-2xl p-5 text-center stat-card transition hover:scale-105">
                 <div class="text-3xl font-bold text-indigo-400" id="totalTasks">0</div>
@@ -366,7 +326,6 @@ HTML_TEMPLATE = '''
             </div>
         </div>
 
-        <!-- Filters & Search -->
         <div class="flex flex-col md:flex-row gap-4 mb-6 items-start md:items-center">
             <div class="flex-1 w-full">
                 <input type="text" id="searchInput" placeholder="Search tasks..." class="w-full bg-transparent border border-white/10 rounded-2xl px-4 py-2.5 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30 transition" />
@@ -387,7 +346,6 @@ HTML_TEMPLATE = '''
             </div>
         </div>
 
-        <!-- Task List -->
         <div id="taskList" class="space-y-3">
             {% if tasks %}
                 {% for task in tasks %}
@@ -432,7 +390,6 @@ HTML_TEMPLATE = '''
     </main>
 
     <script>
-        // ----- DOM refs -----
         const taskForm = document.getElementById('taskForm');
         const taskInput = document.getElementById('taskInput');
         const prioritySelect = document.getElementById('prioritySelect');
@@ -449,12 +406,10 @@ HTML_TEMPLATE = '''
 
         let toastTimer = null;
 
-        // ----- Toast -----
         function showToast(message, type = 'info') {
             if (toastTimer) clearTimeout(toastTimer);
             toast.textContent = message;
             toast.className = `toast ${type}`;
-            // Force reflow
             void toast.offsetWidth;
             toast.classList.add('show');
             toastTimer = setTimeout(() => {
@@ -462,7 +417,6 @@ HTML_TEMPLATE = '''
             }, 3000);
         }
 
-        // ----- Dark Mode -----
         function setDarkMode(isDark) {
             const html = document.documentElement;
             if (isDark) {
@@ -473,7 +427,6 @@ HTML_TEMPLATE = '''
                 localStorage.setItem('darkMode', 'false');
             }
         }
-        // Load saved
         if (localStorage.getItem('darkMode') === 'false') {
             setDarkMode(false);
         } else {
@@ -484,7 +437,6 @@ HTML_TEMPLATE = '''
             setDarkMode(!isDark);
         });
 
-        // ----- API helpers -----
         async function addTask(title, priority) {
             const res = await fetch('/add', {
                 method: 'POST',
@@ -504,7 +456,6 @@ HTML_TEMPLATE = '''
             return res.json();
         }
 
-        // ----- Render tasks from data -----
         function renderTasks(tasks) {
             if (!tasks || tasks.length === 0) {
                 taskList.innerHTML = `
@@ -557,11 +508,9 @@ HTML_TEMPLATE = '''
             });
             taskList.innerHTML = html;
             updateStats(tasks);
-            // Re-bind events
             bindTaskEvents();
         }
 
-        // ----- Update stats -----
         function updateStats(tasks) {
             const total = tasks.length;
             const completed = tasks.filter(t => t.completed).length;
@@ -573,9 +522,7 @@ HTML_TEMPLATE = '''
             completionEl.textContent = rate + '%';
         }
 
-        // ----- Filter & Sort -----
         function getFilteredAndSortedTasks() {
-            // Get all task elements
             const taskElements = document.querySelectorAll('.task-card');
             let tasks = [];
             taskElements.forEach(el => {
@@ -589,19 +536,16 @@ HTML_TEMPLATE = '''
                 });
             });
 
-            // Filter by search
             const search = searchInput.value.toLowerCase().trim();
             if (search) {
                 tasks = tasks.filter(t => t.title.toLowerCase().includes(search));
             }
 
-            // Filter by priority
             const priority = filterPriority.value;
             if (priority !== 'all') {
                 tasks = tasks.filter(t => t.priority === priority);
             }
 
-            // Sort
             const sort = sortBy.value;
             if (sort === 'created_at_desc') {
                 tasks.sort((a, b) => b.created_at.localeCompare(a.created_at));
@@ -620,22 +564,16 @@ HTML_TEMPLATE = '''
 
         function applyFiltersAndSort() {
             const tasks = getFilteredAndSortedTasks();
-            // Show/hide elements
             const allElements = document.querySelectorAll('.task-card');
             allElements.forEach(el => el.style.display = 'none');
             tasks.forEach(t => t.element.style.display = 'flex');
-            // Update stats based on visible tasks? Actually stats should be based on all tasks, not filtered.
-            // We'll keep stats based on all tasks (already updated on render). So no change.
-            // But we might want to show "no tasks" if filtered result empty.
             const visible = tasks.length;
             const emptyState = document.getElementById('emptyState');
             if (visible === 0 && allElements.length > 0) {
-                // We have tasks but none visible, show a message
                 const msg = document.createElement('div');
                 msg.id = 'filterEmpty';
                 msg.className = 'glass rounded-3xl p-12 text-center';
                 msg.innerHTML = `<p class="text-slate-400 dark:text-slate-400">No tasks match your filters.</p>`;
-                // Remove existing if any
                 const old = document.getElementById('filterEmpty');
                 if (old) old.remove();
                 taskList.appendChild(msg);
@@ -645,7 +583,6 @@ HTML_TEMPLATE = '''
             }
         }
 
-        // ----- Bind events on task buttons -----
         function bindTaskEvents() {
             document.querySelectorAll('.complete-btn').forEach(btn => {
                 btn.addEventListener('click', async function(e) {
@@ -654,7 +591,6 @@ HTML_TEMPLATE = '''
                     try {
                         const result = await toggleTask(id);
                         if (result.success) {
-                            // Update UI: toggle completed class and icon
                             const card = this.closest('.task-card');
                             const isCompleted = result.completed;
                             card.dataset.completed = isCompleted;
@@ -662,7 +598,6 @@ HTML_TEMPLATE = '''
                             const titleDiv = card.querySelector('.task-title');
                             titleDiv.classList.toggle('line-through', isCompleted);
                             titleDiv.classList.toggle('opacity-50', isCompleted);
-                            // Update icon
                             this.innerHTML = isCompleted ?
                                 `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="w-5 h-5 text-emerald-400">
                                     <path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12zm13.36-1.814a.75.75 0 10-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 00-1.06 1.06l2.25 2.25a.75.75 0 001.14-.094l3.75-5.25z" clip-rule="evenodd" />
@@ -670,10 +605,6 @@ HTML_TEMPLATE = '''
                                 `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
                                     <path stroke-linecap="round" stroke-linejoin="round" d="M4.5 12.75l6 6 9-13.5" />
                                 </svg>`;
-                            // Update stats
-                            const allTasks = getFilteredAndSortedTasks(); // but we need all tasks, not filtered
-                            // Better: fetch all tasks from server or maintain a list.
-                            // We'll re-fetch all tasks from the server to keep stats consistent.
                             await refreshTasks();
                             showToast('Task updated!', 'success');
                         }
@@ -697,7 +628,6 @@ HTML_TEMPLATE = '''
                             card.style.opacity = '0';
                             setTimeout(() => {
                                 card.remove();
-                                // Refresh stats and reapply filters
                                 refreshTasks();
                             }, 300);
                             showToast('Task deleted.', 'info');
@@ -709,14 +639,12 @@ HTML_TEMPLATE = '''
             });
         }
 
-        // ----- Refresh tasks from server -----
         async function refreshTasks() {
             try {
                 const res = await fetch('/tasks');
                 const data = await res.json();
                 if (data.success) {
                     renderTasks(data.tasks);
-                    // Reapply filters after render
                     applyFiltersAndSort();
                 }
             } catch (err) {
@@ -724,7 +652,6 @@ HTML_TEMPLATE = '''
             }
         }
 
-        // ----- Add task form -----
         taskForm.addEventListener('submit', async function(e) {
             e.preventDefault();
             const title = taskInput.value.trim();
@@ -747,30 +674,20 @@ HTML_TEMPLATE = '''
             }
         });
 
-        // Keyboard shortcut: Ctrl+Enter to submit
         taskInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && e.ctrlKey) {
                 taskForm.dispatchEvent(new Event('submit'));
             }
         });
 
-        // ----- Filters change -----
         searchInput.addEventListener('input', applyFiltersAndSort);
         filterPriority.addEventListener('change', applyFiltersAndSort);
         sortBy.addEventListener('change', applyFiltersAndSort);
 
-        // ----- Init -----
-        // On load, bind events and apply filters
         document.addEventListener('DOMContentLoaded', function() {
             bindTaskEvents();
             applyFiltersAndSort();
-            // Initial stats are already set via renderTasks from server-side rendering.
-            // But if we have tasks from server, we need to update stats.
-            // The server rendered tasks, so stats are updated.
         });
-
-        // Also refresh tasks every minute to sync with other clients (optional)
-        // setInterval(refreshTasks, 60000);
     </script>
 </body>
 </html>
@@ -778,15 +695,11 @@ HTML_TEMPLATE = '''
 
 @app.route('/')
 def index():
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute('SELECT * FROM tasks ORDER BY created_at DESC')
-    tasks = cursor.fetchall()
-    tasks_list = [dict(row) for row in tasks]
-    return render_template_string(HTML_TEMPLATE, tasks=tasks_list)
+    return render_template_string(HTML_TEMPLATE, tasks=tasks)
 
 @app.route('/add', methods=['POST'])
 def add_task():
+    global next_id, tasks
     data = request.get_json()
     title = data.get('title', '').strip()
     priority = data.get('priority', 'medium')
@@ -794,49 +707,48 @@ def add_task():
         return jsonify({'success': False, 'error': 'Title is required'})
     if priority not in ['high', 'medium', 'low']:
         priority = 'medium'
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute(
-        'INSERT INTO tasks (title, priority) VALUES (?, ?)',
-        (title, priority)
-    )
-    db.commit()
-    return jsonify({'success': True, 'id': cursor.lastrowid})
+    from datetime import datetime
+    now = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+    task = {
+        'id': next_id,
+        'title': title,
+        'priority': priority,
+        'completed': False,
+        'created_at': now
+    }
+    tasks.append(task)
+    next_id += 1
+    trigger_webhook({'event': 'task_added', 'task_id': task['id'], 'title': title, 'priority': priority})
+    return jsonify({'success': True, 'id': task['id']})
 
 @app.route('/toggle/<int:task_id>', methods=['POST'])
 def toggle_task(task_id):
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute('SELECT completed FROM tasks WHERE id = ?', (task_id,))
-    row = cursor.fetchone()
-    if not row:
-        return jsonify({'success': False, 'error': 'Task not found'})
-    new_status = 1 if row['completed'] == 0 else 0
-    cursor.execute(
-        'UPDATE tasks SET completed = ? WHERE id = ?',
-        (new_status, task_id)
-    )
-    db.commit()
-    return jsonify({'success': True, 'completed': bool(new_status)})
+    for task in tasks:
+        if task['id'] == task_id:
+            task['completed'] = not task['completed']
+            trigger_webhook({'event': 'task_toggled', 'task_id': task_id, 'completed': task['completed']})
+            return jsonify({'success': True, 'completed': task['completed']})
+    return jsonify({'success': False, 'error': 'Task not found'})
 
 @app.route('/delete/<int:task_id>', methods=['POST'])
 def delete_task(task_id):
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute('DELETE FROM tasks WHERE id = ?', (task_id,))
-    db.commit()
-    if cursor.rowcount == 0:
-        return jsonify({'success': False, 'error': 'Task not found'})
-    return jsonify({'success': True})
+    global tasks
+    for i, task in enumerate(tasks):
+        if task['id'] == task_id:
+            del tasks[i]
+            trigger_webhook({'event': 'task_deleted', 'task_id': task_id})
+            return jsonify({'success': True})
+    return jsonify({'success': False, 'error': 'Task not found'})
 
 @app.route('/tasks')
 def get_tasks():
-    db = get_db()
-    cursor = db.cursor()
-    cursor.execute('SELECT * FROM tasks ORDER BY created_at DESC')
-    tasks = cursor.fetchall()
-    tasks_list = [dict(row) for row in tasks]
-    return jsonify({'success': True, 'tasks': tasks_list})
+    return jsonify({'success': True, 'tasks': tasks})
+
+@app.route('/complete-simulation', methods=['POST'])
+def complete_simulation():
+    data = {"status": "success", "message": "BB84 key distribution complete"}
+    trigger_webhook(data)
+    return jsonify({"status": "Webhook sent"})
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5000)
+    app.run(debug=True, host='0.0.0.0', port=5001)
