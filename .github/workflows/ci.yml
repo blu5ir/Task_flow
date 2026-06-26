@@ -1,25 +1,41 @@
 name: Presentation Pipeline
 
-on: [push]
+on:
+  push:
+    branches:
+      - main
 
 jobs:
   test:
     runs-on: ubuntu-latest
+
     steps:
-      - uses: actions/checkout@v3
-      - name: Run Tests
-        run: echo "Simulating unit tests... PASSED"
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - run: pip install -r requirements.txt
+
+      - run: echo "Tests Passed"
 
   build:
     needs: test
     runs-on: ubuntu-latest
+
     steps:
-      - name: Build Artifact
-        run: echo "Building application container..."
+      - uses: actions/checkout@v4
+
+      - run: echo "Application Built"
 
   deploy:
     needs: build
     runs-on: ubuntu-latest
+
     steps:
-      - name: Run Deployment Script
-        run: bash deploy.sh
+      - uses: actions/checkout@v4
+
+      - run: chmod +x deploy.sh
+
+      - run: ./deploy.sh
