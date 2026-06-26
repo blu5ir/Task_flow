@@ -1,18 +1,3 @@
-import requests
-from flask import Flask, request, jsonify, render_template_string
-
-app = Flask(__name__)
-
-# In-memory task storage (no database)
-tasks = []
-next_id = 1
-
-def trigger_webhook(payload):
-    webhook_url = "YOUR_TASKFLOW_WEBHOOK_URL"
-    try:
-        requests.post(webhook_url, json=payload, timeout=3)
-    except Exception as e:
-        print(f"Webhook error: {e}")
 
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
