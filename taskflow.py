@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify, g
+from flask import Flask, render_template, request, jsonify
 import os
 import requests
 from datetime import datetime
@@ -42,7 +42,7 @@ def webhook_receiver():
     return jsonify({"status": "success", "message": "Payload received"}), 200
 
 # ──────────────────────────────────────────────
-# HTML Template (unchanged from original, only shown here for completeness)
+# HTML Template (embedded for single-file deployment)
 # ──────────────────────────────────────────────
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
