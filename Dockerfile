@@ -18,4 +18,4 @@ EXPOSE 5001
 
 # Define the command to run your app
 # (If your main file is named something else like taskflow.py, change it here)
-CMD ["python", "app.py"]
+CMD ["python", "taskflow.py"]
