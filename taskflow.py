@@ -1,7 +1,7 @@
+from flask import Flask, render_template, request, jsonify, g
 import os
 import requests
 from datetime import datetime
-from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
