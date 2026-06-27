@@ -26,8 +26,7 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest
-
+          pip install pytest requests
       - name: Run tests
         run: pytest test_app.py -v
         
