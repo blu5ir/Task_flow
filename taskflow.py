@@ -5,19 +5,45 @@ from flask import Flask, request, jsonify, render_template_string
 
 app = Flask(__name__)
 
-# In‑memory storage
+# In-memory storage
 tasks = []
 next_id = 1
 
-# Webhook URL – set via environment variable or use placeholder
-WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "YOUR_TASKFLOW_WEBHOOK_URL")
+# Outgoing webhook URL – set via environment variable or leave empty to disable
+WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")
 
 def trigger_webhook(payload):
+    """Send an outbound webhook if a valid URL is configured."""
+    if not WEBHOOK_URL or WEBHOOK_URL == "YOUR_TASKFLOW_WEBHOOK_URL":
+        return  # no URL configured, do nothing
     try:
         requests.post(WEBHOOK_URL, json=payload, timeout=3)
     except Exception as e:
         print(f"Webhook error: {e}")
 
+# ──────────────────────────────────────────────
+# Incoming webhook receiver
+# ──────────────────────────────────────────────
+@app.route('/webhook', methods=['POST'])
+def webhook_receiver():
+    """Receive external webhooks (e.g., from a CI/CD system)."""
+    if not request.is_json:
+        return jsonify({"status": "error", "message": "Request must be JSON"}), 400
+
+    payload = request.get_json()
+    event_type = payload.get('event', 'unknown_event')
+    print(f"Received {event_type} webhook! Payload data: {payload}")
+
+    # Custom logic based on event type
+    if event_type == 'task_added':
+        # Example: you could update something, send an email, etc.
+        pass
+
+    return jsonify({"status": "success", "message": "Payload received"}), 200
+
+# ──────────────────────────────────────────────
+# HTML Template (unchanged from original, only shown here for completeness)
+# ──────────────────────────────────────────────
 HTML_TEMPLATE = '''
 <!DOCTYPE html>
 <html lang="en" class="dark">
@@ -697,6 +723,9 @@ HTML_TEMPLATE = '''
 </html>
 '''
 
+# ──────────────────────────────────────────────
+# Task management API routes
+# ──────────────────────────────────────────────
 @app.route('/')
 def index():
     return render_template_string(HTML_TEMPLATE, tasks=tasks)
@@ -749,10 +778,14 @@ def get_tasks():
 
 @app.route('/complete-simulation', methods=['POST'])
 def complete_simulation():
+    """Simulate sending an external webhook (e.g., BB84 key distribution complete)."""
     data = {"status": "success", "message": "BB84 key distribution complete"}
     trigger_webhook(data)
     return jsonify({"status": "Webhook sent"})
 
+# ──────────────────────────────────────────────
+# Main entry point
+# ──────────────────────────────────────────────
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5001))
     app.run(debug=False, host='0.0.0.0', port=port)
