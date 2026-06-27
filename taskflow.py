@@ -1,3 +1,13 @@
+import os
+import requests
+from datetime import datetime
+from flask import Flask, request, jsonify, render_template_string
+
+app = Flask(__name__)
+
+# In‑memory storage
+tasks = []
+next_id = 1
 
 # Webhook URL – set via environment variable or use placeholder
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "YOUR_TASKFLOW_WEBHOOK_URL")
