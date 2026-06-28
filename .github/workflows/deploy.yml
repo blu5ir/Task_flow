@@ -8,10 +8,14 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
+      - uses: actions/checkout@v3
+      
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PA_HOSTNAME }}
           username: ${{ secrets.PA_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: /home/blu5ir/deploy.sh
+          passphrase: ${{ secrets.SSH_PASSPHRASE }} # If you didn't set one, leave this line out
+          script: |
+            /home/blu5ir/deploy.sh
