@@ -16,6 +16,5 @@ jobs:
           host: ${{ secrets.PA_HOSTNAME }}
           username: ${{ secrets.PA_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          passphrase: ${{ secrets.SSH_PASSPHRASE }} 
           script: |
             /home/blu5ir/deploy.sh
