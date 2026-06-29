@@ -8,14 +8,16 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - uses: appleboy/ssh-action@v1.2.2
+      - uses: actions/checkout@v4   # <-- Use the latest checkout
 
       - name: Deploy via SSH
-        uses: appleboy/ssh-action@master
+        uses: appleboy/ssh-action@v1.2.2   # <-- Fixed version
         with:
           host: ${{ secrets.PA_HOSTNAME }}
           username: ${{ secrets.PA_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
+          # (Optional) Uncomment if you have the fingerprint secret:
+          # fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
           script: |
             set -xe
 
