@@ -19,14 +19,38 @@ jobs:
           script: |
             set -xe
 
+            echo "=== User ==="
+            whoami
+
+            echo "=== Home directory ==="
+            pwd
+
+            echo "=== Project directory contents ==="
+            ls -la /home/blu5ir
+
             cd /home/blu5ir/Task_flow
 
+            echo "=== Git status before pull ==="
+            git status
+
+            echo "=== Pulling latest code ==="
             /usr/bin/git fetch origin
             /usr/bin/git reset --hard origin/main
             /usr/bin/git clean -fd
 
+            echo "=== Activating virtual environment ==="
+            ls -l /home/blu5ir/Task_flow/venv/bin/activate
             source /home/blu5ir/Task_flow/venv/bin/activate
 
+            echo "=== Python version ==="
+            python --version
+            pip --version
+
+            echo "=== Installing/updating dependencies ==="
             pip install -r requirements.txt
 
+            echo "=== Touching WSGI file to reload ==="
+            ls -l /var/www
             touch /var/www/blu5ir_pythonanywhere_com_wsgi.py
+
+            echo "=== Deployment completed successfully! ==="
