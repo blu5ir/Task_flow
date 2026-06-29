@@ -9,7 +9,6 @@ app = Flask(__name__)
 tasks = []
 next_id = 1
 
-# Outgoing webhook URL – set via environment variable or leave empty to disable
 WEBHOOK_URL = os.environ.get("WEBHOOK_URL", "")
 
 def trigger_webhook(payload):
