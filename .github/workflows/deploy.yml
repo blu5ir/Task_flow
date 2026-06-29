@@ -9,10 +9,24 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
+
       - name: Deploy via SSH
         uses: appleboy/ssh-action@master
         with:
           host: ${{ secrets.PA_HOSTNAME }}
           username: ${{ secrets.PA_USERNAME }}
           key: ${{ secrets.SSH_PRIVATE_KEY }}
-          script: /home/blu5ir/deploy.sh
+          script: |
+            set -xe
+            cd /home/blu5ir/Task_flow
+
+            /usr/bin/git fetch origin
+            /usr/bin/git reset --hard origin/main
+            /usr/bin/git clean -fd
+
+            source /home/blu5ir/venv/bin/activate
+            pip install -r requirements.txt
+
+            # Touch the WSGI file to reload the application
+            # Adjust this path if your WSGI file is named differently
+            touch /var/www/blu5ir_pythonanywhere_com_wsgi.py
