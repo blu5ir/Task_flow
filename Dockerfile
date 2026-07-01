@@ -8,8 +8,4 @@ RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 5001
-
-ENV PYTHONUNBUFFERED=1
-
-CMD ["python", "taskflow.py"]
+CMD ["gunicorn", "taskflow:app"]
