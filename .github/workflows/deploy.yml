@@ -18,19 +18,7 @@ jobs:
           key: ${{ secrets.SSH_PRIVATE_KEY }}
           port: 22
           debug: true
+          request_pty: true
           script: |
-            set -xe
-
-            cd /home/blu5ir/Task_flow
-
-            git fetch origin
-            git reset --hard origin/main
-            git clean -fd
-
-            source /home/blu5ir/Task_flow/venv/bin/activate
-
-            pip install -r requirements.txt
-
-            touch /var/www/blu5ir_pythonanywhere_com_wsgi.py
-
-            echo "Deployment successful!"
+            whoami
+            pwd
