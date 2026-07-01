@@ -300,7 +300,7 @@ HTML_TEMPLATE = '''
     <section class="hero-gradient pt-28 pb-16 px-4 md:px-12 text-center relative overflow-hidden">
         <div class="max-w-4xl mx-auto relative z-10">
             <h1 class="hero-heading text-5xl md:text-7xl font-space font-bold leading-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
-                Focus On What Matters
+               dinnu boss
             </h1>
             <p class="text-lg md:text-xl text-slate-300 dark:text-slate-300 max-w-2xl mx-auto font-light">
                 Organize, prioritize, and complete your most important work.
@@ -362,7 +362,7 @@ HTML_TEMPLATE = '''
             <div class="flex flex-wrap gap-3 items-center">
                 <select id="filterPriority" class="bg-transparent border border-white/10 rounded-2xl px-3 py-2 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30 transition">
                     <option value="all">All Priorities</option>
-                    <option value="huge">🔴 High</option>
+                    <option value="high">🔴 High</option>
                     <option value="medium">🟡 Medium</option>
                     <option value="low">🟢 Low</option>
                 </select>
