@@ -1,60 +1,11 @@
-name: Deploy to PythonAnywhere
-
-on:
-  push:
-    branches: [ main ]
-
-jobs:
-  deploy:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Deploy via SSH
-        uses: appleboy/ssh-action@v1.2.2
-        with:
-          host: ${{ secrets.PA_HOSTNAME }}
-          username: ${{ secrets.PA_USERNAME }}
-          key: ${{ secrets.SSH_PRIVATE_KEY }}
-          # Uncomment the line below if you have the SSH host fingerprint as a secret
-          # fingerprint: ${{ secrets.SSH_HOST_FINGERPRINT }}
-          # Set debug: true if you need even more verbose logs
-          # debug: true
-          script: |
-            set -xe
-
-            echo "=== User ==="
-            whoami
-
-            echo "=== Home directory ==="
-            pwd
-
-            echo "=== Project directory contents ==="
-            ls -la /home/blu5ir
-
-            cd /home/blu5ir/Task_flow
-
-            echo "=== Git status before pull ==="
-            git status
-
-            echo "=== Pulling latest code ==="
-            /usr/bin/git fetch origin
-            /usr/bin/git reset --hard origin/main
-            /usr/bin/git clean -fd
-
-            echo "=== Activating virtual environment ==="
-            ls -l /home/blu5ir/Task_flow/venv/bin/activate
-            source /home/blu5ir/Task_flow/venv/bin/activate
-
-            echo "=== Python version ==="
-            python --version
-            pip --version
-
-            echo "=== Installing/updating dependencies ==="
-            pip install -r requirements.txt
-
-            echo "=== Touching WSGI file to reload ==="
-            ls -l /var/www
-            touch /var/www/blu5ir_pythonanywhere_com_wsgi.py
-
-            echo "=== Deployment completed successfully! ==="
+- name: Deploy
+  uses: appleboy/ssh-action@v1.2.2
+  with:
+    host: ssh.pythonanywhere.com
+    username: blu5ir
+    key: ${{ secrets.PA_SSH_KEY }}
+    port: 22
+    debug: true
+    script: |
+      whoami
+      pwd
