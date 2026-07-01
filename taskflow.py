@@ -362,7 +362,7 @@ HTML_TEMPLATE = '''
             <div class="flex flex-wrap gap-3 items-center">
                 <select id="filterPriority" class="bg-transparent border border-white/10 rounded-2xl px-3 py-2 text-sm focus:border-indigo-400 focus:ring-2 focus:ring-indigo-400/30 transition">
                     <option value="all">All Priorities</option>
-                    <option value="high">🔴 High</option>
+                    <option value="huge">🔴 High</option>
                     <option value="medium">🟡 Medium</option>
                     <option value="low">🟢 Low</option>
                 </select>
