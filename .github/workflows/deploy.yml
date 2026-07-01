@@ -1,24 +1,36 @@
-- name: Deploy
-  uses: appleboy/ssh-action@v1.2.2
-  with:
-    host: ${{ secrets.PA_HOSTNAME }}
-    username: ${{ secrets.PA_USERNAME }}
-    key: ${{ secrets.SSH_PRIVATE_KEY }}
-    port: 22
-    debug: true
-    script: |
-      set -xe
+name: Deploy to PythonAnywhere
 
-      cd /home/blu5ir/Task_flow
+on:
+  push:
+    branches:
+      - main
 
-      git fetch origin
-      git reset --hard origin/main
-      git clean -fd
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
 
-      source /home/blu5ir/Task_flow/venv/bin/activate
+    steps:
+      - name: Deploy
+        uses: appleboy/ssh-action@v1.2.2
+        with:
+          host: ${{ secrets.PA_HOSTNAME }}
+          username: ${{ secrets.PA_USERNAME }}
+          key: ${{ secrets.SSH_PRIVATE_KEY }}
+          port: 22
+          debug: true
+          script: |
+            set -xe
 
-      pip install -r requirements.txt
+            cd /home/blu5ir/Task_flow
 
-      touch /var/www/blu5ir_pythonanywhere_com_wsgi.py
+            git fetch origin
+            git reset --hard origin/main
+            git clean -fd
 
-      echo "Deployment successful!"
+            source /home/blu5ir/Task_flow/venv/bin/activate
+
+            pip install -r requirements.txt
+
+            touch /var/www/blu5ir_pythonanywhere_com_wsgi.py
+
+            echo "Deployment successful!"
