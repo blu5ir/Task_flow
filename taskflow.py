@@ -300,7 +300,7 @@ HTML_TEMPLATE = '''
     <section class="hero-gradient pt-28 pb-16 px-4 md:px-12 text-center relative overflow-hidden">
         <div class="max-w-4xl mx-auto relative z-10">
             <h1 class="hero-heading text-5xl md:text-7xl font-space font-bold leading-tight mb-4 bg-clip-text text-transparent bg-gradient-to-r from-indigo-300 via-purple-300 to-emerald-300">
-               dinnu boss
+               Focus with Purpose
             </h1>
             <p class="text-lg md:text-xl text-slate-300 dark:text-slate-300 max-w-2xl mx-auto font-light">
                 Organize, prioritize, and complete your most important work.
